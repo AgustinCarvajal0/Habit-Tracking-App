@@ -1,0 +1,171 @@
+import json
+from datetime import date
+from Habit_Class import Habit
+    
+def load_json():
+    with open("Habit_Database.json", "r") as archivo:
+
+        data = json.load(archivo)
+        return [Habit.from_dict(d) for d in data]
+
+
+def save_json(habits):
+    with open("Habit_Database.json", "w") as archivo:
+        json.dump([t.to_dict() for t in habits], archivo, indent=4, ensure_ascii=False)
+
+
+def create_habit():
+
+    try:
+        habits_list = load_json()
+    except FileNotFoundError:
+        habits_list = []
+
+    helper = False
+    helper_list = []
+    new_name = input("Please insert the name of your brand new Habit: ")
+
+    for h in habits_list:
+        if new_name == h.name:
+            new_name = input("That name is already taken. Choose a new one: ")
+    
+    new_periodicity = input("Please enter the frequency in which you would like to complete the habit ('d' for daily, 'w' for weekly): ")
+
+    while helper == False:
+        if new_periodicity == str("d"):
+            period = True
+            helper = True
+
+        if new_periodicity == str("w"):
+            period = False
+            helper = True
+
+        if helper == False:
+            new_periodicity = input("Please enter a valid input following the stated instructions ('d' for daily, 'w' for weekly): ")
+
+    if new_periodicity == "d":
+        timespan = input("Please state the amount of days that you want to keep this habit streak for: ")
+
+    if new_periodicity == "w":
+        timespan = int(input("Please state the amount of weeks that you want to keep this habit streak for: "))
+            
+    #if True, periodicity = daily. if False, periodicity = weekly
+    new_details = str(input("Add any details you would like to the habit: "))
+    today = date.today().isoformat()
+    helper_list.append(today)
+
+    new_habit = Habit(new_name, timespan, period, str(new_details), False, 0, None, [])
+
+    habits_list.append(new_habit)
+    save_json(habits_list)
+
+    print("Your New habit has been added to the database \n")
+
+
+
+def delete_habit():
+
+    print("Your current habits are: \n")
+    opened_database = load_json()
+    contador = 1
+    habits_to_keep = []
+
+    for habit in opened_database:
+        print(str(contador)+ ".- " + habit.name)
+        contador += 1
+
+    deleted = input("\n Please type the name of the habit you wish to delete: \n")
+    deleted = deleted.lower()
+
+    with open("Habit_Database.json","w") as archivo:
+        for linea in opened_database:
+            if str(deleted) not in str(linea):
+                habits_to_keep.append(linea)
+            if str(deleted) in str(linea):
+                print("Habit successfully deleted \n")
+
+        json.dump([t.to_dict() for t in habits_to_keep], archivo, indent=4, ensure_ascii=False)
+
+
+def check_a_habit():
+    print("Your current habits are: \n")
+    opened_database = load_json()
+    contador = 1
+
+    for habit in opened_database:
+        print(str(contador)+ ".- " + habit.name)
+        contador += 1
+    
+    habit_to_check = str(input("\n Please type the name of the habit you wish to check: \n"))
+
+    for i in opened_database:
+        if i.name == habit_to_check:
+            print("\n")
+            i.update_streak()
+
+            i.check_habit()
+    
+    save_json(opened_database)
+
+
+
+def request_overall_analysis():
+
+    habits_list = load_json()
+    current_habits = list()
+    
+    def streak(e):
+        return e[1]
+
+
+    for habits in habits_list:
+        habits.update_streak()
+        name_and_streak_and_period = (habits.name, habits.streak, habits.periodicity)
+        current_habits.append(name_and_streak_and_period)
+    
+    current_habits.sort(reverse = True, key = streak)
+
+    printed_week = []
+    printed_day = []
+
+    count_daily = 1
+    count_week = 1
+    for habits in current_habits:
+        if habits[2] == True:
+            current_message = str(count_daily) + ".- The habit " + habits[0] + " is on a "+ str(habits[1]) +" day streak \n"
+            printed_day.append(current_message)
+            count_daily += 1
+
+        if habits[2] == False:
+            current_message = str(count_week) + ".- The habit " + habits[0] + " is on a "+ str(habits[1]) +" week streak \n"
+            printed_week.append(current_message)
+        
+            count_week += 1
+    
+    print("The list of the longest streak for daily streaks is: \n")
+    for item in printed_day:
+        print(str(item))
+
+    print("The list of the longest streak for weekly streaks is: \n")
+    for item in printed_week:
+        print(str(item))
+
+
+def specific_habit_analysis():
+
+    opened_database = load_json()
+    contador = 1
+
+    for habit in opened_database:
+        print(str(contador)+ ".- " + habit.name)
+        contador += 1
+    
+    nombre_habito = input(str("Please state the name of the habit you want to be analyzed \n"))
+    for habit in opened_database:
+        if habit.name == nombre_habito:
+            habit.habit_analysis()
+
+    pass
+
+
+
